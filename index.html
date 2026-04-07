@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental EMR Hub & CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="brand">
+                <div class="logo">
+                    <i class="ri-tooth-fill"></i>
+                </div>
+                <h1>Dental Hub</h1>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="active" data-target="dashboard-view"><i class="ri-dashboard-line"></i> ダッシュボード</li>
+                <li data-target="crm-view"><i class="ri-folder-user-line"></i> 顧客管理 (CRM)</li>
+                <li data-target="soap-view"><i class="ri-file-list-3-line"></i> カルテ管理 (SOAP)</li>
+                <li data-target="graph-view"><i class="ri-node-tree"></i> 紹介ネットワーク</li>
+            </ul>
+
+            <div class="user-profile">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Dr. Profile" class="avatar">
+                <div class="user-info">
+                    <span class="user-name">Dr. Yamada</span>
+                    <span class="user-role">院長</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- View Manager -->
+            
+            <!-- CRM View -->
+            <section id="crm-view" class="view-section active">
+                <div class="header-bar">
+                    <h2>顧客管理 (CRM)</h2>
+                    <div class="search-bar">
+                        <i class="ri-search-line"></i>
+                        <input type="text" id="patient-search" placeholder="患者名、フリガナ、電話番号で検索...">
+                    </div>
+                    <button class="btn btn-primary"><i class="ri-user-add-line"></i> 新規患者</button>
+                </div>
+                <div class="view-body">
+                    <div class="filters">
+                        <span class="filter-chip active" data-filter="all">すべて</span>
+                        <span class="filter-chip" data-filter="new">新患</span>
+                        <span class="filter-chip" data-filter="recall">定期検診</span>
+                        <span class="filter-chip" data-filter="drop">中断</span>
+                    </div>
+                    <div class="patient-grid" id="patient-list">
+                        <!-- Patient Cards will be loaded here via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- SOAP View -->
+            <section id="soap-view" class="view-section">
+                <div class="header-bar">
+                    <h2>カルテ管理 (SOAP)</h2>
+                    <div class="patient-selector">
+                        <select id="soap-patient-select" class="custom-select">
+                            <option value="">患者を選択してください...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="view-body soap-layout" id="soap-content">
+                    <div class="soap-history">
+                        <h3>過去のカルテ</h3>
+                        <div class="timeline" id="soap-timeline">
+                            <!-- Dynamic records -->
+                        </div>
+                    </div>
+                    <div class="soap-editor card">
+                        <h3>新規カルテ作成</h3>
+                        <form id="soap-form">
+                            <div class="dental-chart input-group">
+                                <label><i class="ri-teeth-line"></i> 歯式・部位</label>
+                                <input type="text" placeholder="例: 上顎右側第一大臼歯 (16)" class="form-control">
+                            </div>
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <label>S (Subjective) - 主訴</label>
+                                    <textarea id="soap-s" rows="3" placeholder="患者の訴え..."></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label>O (Objective) - 客観的所見</label>
+                                    <textarea id="soap-o" rows="3" placeholder="検査結果、視診..."></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label>A (Assessment) - 評価・診断</label>
+                                    <textarea id="soap-a" rows="3" placeholder="所見に基づく評価..."></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label>P (Plan) - 計画・処置</label>
+                                    <textarea id="soap-p" rows="3" placeholder="本日の処置と次回の計画..."></textarea>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary">キャンセル</button>
+                                <button type="submit" class="btn btn-primary">保存する</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Graph View -->
+            <section id="graph-view" class="view-section">
+                <div class="header-bar">
+                    <h2>紹介ネットワーク</h2>
+                    <div class="graph-controls">
+                        <div class="control-group">
+                            <label>時間フィルタ:</label>
+                            <select id="graph-time-filter" class="custom-select">
+                                <option value="all">全期間</option>
+                                <option value="1y" selected>過去1年以内</option>
+                                <option value="6m">過去6ヶ月以内</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="view-body graph-container">
+                    <div class="graph-legend card">
+                        <div class="legend-item">
+                            <div class="color-dot family"></div> 家族紹介
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-dot friend"></div> 友人・知人紹介
+                        </div>
+                        <div class="legend-note">
+                            ※ ノードの大きさは紹介実績数を表します
+                        </div>
+                    </div>
+                    <div id="d3-graph"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/graph.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
