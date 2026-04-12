@@ -158,35 +158,79 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Dental Chart Logic ---
+    // --- Interactive Dental Chart (State Tagging) ---
+    let toothStates = new Map();
+
+    // HTMLのクリアボタンから呼び出せるようにグローバルに登録
+    window.clearDentalChart = () => {
+        toothStates.clear();
+        document.querySelectorAll('.tooth').forEach(el => {
+            // 付与されている状態クラスをリセット
+            el.className = `tooth ${el.classList.contains('upper') ? 'upper' : 'lower'}`;
+        });
+        updateToothInput();
+    };
+
+    const updateToothInput = () => {
+        const teethInput = document.getElementById('soap-teeth');
+        if (!teethInput) return;
+
+        const stateLabels = {
+            'selected': '選択',
+            'decay': '虫歯',
+            'treated': '治療済',
+            'missing': '欠損'
+        };
+
+        const groups = {};
+        toothStates.forEach((state, num) => {
+            if(!groups[state]) groups[state] = [];
+            groups[state].push(num);
+        });
+
+        const summaryParts = [];
+        for (const [state, nums] of Object.entries(groups)) {
+            nums.sort((a,b) => a - b);
+            summaryParts.push(`${stateLabels[state]}: ${nums.join(', ')}`);
+        }
+        
+        teethInput.value = summaryParts.join(' / ');
+    };
+
     const initDentalChart = () => {
         const chartContainer = document.getElementById('interactive-dental-chart');
-        const teethInput = document.getElementById('soap-teeth');
-        if (!chartContainer || !teethInput) return;
+        if (!chartContainer) return;
 
         const arches = [
             {
                 type: 'upper',
                 quadrants: [
-                    [18, 17, 16, 15, 14, 13, 12, 11], // Top Right (Patient's right, screen left)
-                    [21, 22, 23, 24, 25, 26, 27, 28]  // Top Left (Patient's left, screen right)
+                    [18, 17, 16, 15, 14, 13, 12, 11],
+                    [21, 22, 23, 24, 25, 26, 27, 28]
                 ]
             },
             {
                 type: 'lower',
                 quadrants: [
-                    [48, 47, 46, 45, 44, 43, 42, 41], // Bottom Right
-                    [31, 32, 33, 34, 35, 36, 37, 38]  // Bottom Left
+                    [48, 47, 46, 45, 44, 43, 42, 41],
+                    [31, 32, 33, 34, 35, 36, 37, 38]
                 ]
             }
         ];
 
-        let selectedTeeth = new Set();
-
-        const updateInput = () => {
-            // Sort normally or by quadrant if needed, regular sort sorts 11, 12... which is fine for now
-            const sortedTeeth = Array.from(selectedTeeth).sort();
-            teethInput.value = sortedTeeth.join(', ');
+        const toothPaths = {
+            upper: {
+                incisor: 'M 4,25 Q 4,38 12,38 Q 20,38 20,25 Q 20,15 16,5 Q 14,2 12,2 Q 10,2 8,5 Q 4,15 4,25 Z',
+                canine: 'M 5,22 Q 5,32 12,38 Q 19,32 19,22 Q 19,12 16,4 Q 14,1 12,1 Q 10,1 8,4 Q 5,12 5,22 Z',
+                premolar: 'M 4,20 Q 4,35 12,35 Q 20,35 20,20 Q 20,12 17,4 Q 15,2 12,4 Q 9,2 7,4 Q 4,12 4,20 Z',
+                molar: 'M 2,18 Q 2,34 12,34 Q 22,34 22,18 C 22,12 20,4 17,4 Q 15,4 15,10 Q 12,4 12,4 Q 12,4 9,10 Q 9,4 7,4 C 4,4 2,12 2,18 Z'
+            },
+            lower: {
+                incisor: 'M 4,15 Q 4,2 12,2 Q 20,2 20,15 Q 20,25 16,35 Q 14,38 12,38 Q 10,38 8,35 Q 4,25 4,15 Z',
+                canine: 'M 5,18 Q 5,8 12,2 Q 19,8 19,18 Q 19,28 16,36 Q 14,39 12,39 Q 10,39 8,36 Q 5,28 5,18 Z',
+                premolar: 'M 4,20 Q 4,5 12,5 Q 20,5 20,20 Q 20,28 17,36 Q 15,38 12,36 Q 9,38 7,36 Q 4,28 4,20 Z',
+                molar: 'M 2,22 Q 2,6 12,6 Q 22,6 22,22 C 22,28 20,36 17,36 Q 15,36 15,30 Q 12,36 12,36 Q 12,36 9,30 Q 9,36 7,36 C 4,36 2,28 2,22 Z'
+            }
         };
 
         const getToothType = (num) => {
@@ -197,37 +241,51 @@ document.addEventListener("DOMContentLoaded", () => {
             return 'molar';
         };
 
+        const getSelectedTool = () => {
+            const checkedRadio = document.querySelector('input[name="dental-tool"]:checked');
+            return checkedRadio ? checkedRadio.value : 'selected';
+        };
+
         arches.forEach(arch => {
             const archDiv = document.createElement('div');
             archDiv.className = `dental-arch ${arch.type}`;
 
-            arch.quadrants.forEach((quad, index) => {
+            arch.quadrants.forEach((quad) => {
                 const quadDiv = document.createElement('div');
                 quadDiv.className = 'dental-quadrant';
 
                 quad.forEach(toothNum => {
+                    const type = getToothType(toothNum);
+                    const pathData = toothPaths[arch.type][type];
+                    
                     const toothDiv = document.createElement('div');
                     toothDiv.className = `tooth ${arch.type}`;
-                    toothDiv.textContent = toothNum;
-                    toothDiv.setAttribute('data-tooth-type', getToothType(toothNum));
+                    toothDiv.setAttribute('data-tooth-type', type);
+                    
+                    toothDiv.innerHTML = `
+                        <svg viewBox="0 0 24 40" class="tooth-svg" preserveAspectRatio="none">
+                            <path d="${pathData}" class="tooth-path"></path>
+                        </svg>
+                        <span class="tooth-num">${toothNum}</span>
+                    `;
                     
                     toothDiv.addEventListener('click', () => {
-                        if (selectedTeeth.has(toothNum)) {
-                            selectedTeeth.delete(toothNum);
-                            toothDiv.classList.remove('selected');
+                        const currentTool = getSelectedTool();
+                        
+                        if (toothStates.get(toothNum) === currentTool) {
+                            toothStates.delete(toothNum);
+                            toothDiv.className = `tooth ${arch.type}`;
                         } else {
-                            selectedTeeth.add(toothNum);
-                            toothDiv.classList.add('selected');
+                            toothStates.set(toothNum, currentTool);
+                            toothDiv.className = `tooth ${arch.type} state-${currentTool}`;
                         }
-                        updateInput();
+                        updateToothInput();
                     });
 
                     quadDiv.appendChild(toothDiv);
                 });
-
                 archDiv.appendChild(quadDiv);
             });
-
             chartContainer.appendChild(archDiv);
         });
     };
@@ -237,6 +295,113 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial render
     renderPatients();
     
+    // --- New Patient Registration Logic ---
+    const crmNewPatientBtn = document.querySelector('#crm-view .header-bar .btn-primary');
+    const modal = document.getElementById('new-patient-modal');
+    const modalClose = document.getElementById('modal-close');
+    const modalCancel = document.getElementById('modal-cancel');
+    const newPatientForm = document.getElementById('new-patient-form');
+
+    const openModal = () => {
+        if(modal) modal.classList.add('active');
+    };
+
+    const closeModal = () => {
+        if(modal) {
+            modal.classList.remove('active');
+            if(newPatientForm) newPatientForm.reset();
+        }
+    };
+
+    if (crmNewPatientBtn) crmNewPatientBtn.addEventListener('click', openModal);
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalCancel) modalCancel.addEventListener('click', closeModal);
+
+    if (newPatientForm) {
+        newPatientForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newId = `P${String(patients.length + 1).padStart(3, '0')}`;
+            const newPatient = {
+                id: newId,
+                name: document.getElementById('np-name').value,
+                kana: document.getElementById('np-kana').value,
+                phone: document.getElementById('np-phone').value,
+                status: document.getElementById('np-status').value,
+                dob: "2000-01-01", // Default mock value
+                lastVisit: "今日",
+                tags: ["新患登録"],
+                introducedBy: null
+            };
+
+            patients.push(newPatient); // Add to data array
+            
+            // Also append to the SOAP patient selector
+            const soapSelectEl = document.getElementById('soap-patient-select');
+            if(soapSelectEl) {
+                const option = document.createElement('option');
+                option.value = newPatient.id;
+                option.textContent = `${newPatient.id} - ${newPatient.name}`;
+                soapSelectEl.appendChild(option);
+            }
+
+            closeModal();
+            renderPatients(); // Re-render the grid
+            
+            // Re-render graph if necessary
+            if (graphInitialized) initGraphView();
+        });
+    }
+
+    // --- SOAP Form Submission Logic ---
+    const soapForm = document.getElementById('soap-form');
+    if (soapForm) {
+        soapForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const selectedPatientId = soapSelect.value;
+            if (!selectedPatientId) {
+                alert('患者が選択されていません。上部のセレクトボックスから患者を選んでください。');
+                return;
+            }
+
+            const teethVal = document.getElementById('soap-teeth').value;
+            const sVal = document.getElementById('soap-s').value;
+            const oVal = document.getElementById('soap-o').value;
+            const aVal = document.getElementById('soap-a').value;
+            const pVal = document.getElementById('soap-p').value;
+            
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+            
+            const newRecordId = `S${String(soapRecords.length + 1001).padStart(4, '0')}`;
+            
+            const newRecord = {
+                id: newRecordId,
+                patientId: selectedPatientId,
+                date: dateStr,
+                teeth: teethVal || "-",
+                s: sVal || "-",
+                o: oVal || "-",
+                a: aVal || "-",
+                p: pVal || "-"
+            };
+            
+            // save to array
+            soapRecords.push(newRecord);
+            
+            // form reset
+            soapForm.reset();
+            if (window.clearDentalChart) window.clearDentalChart();
+            
+            // re-render the timeline
+            renderSoapHistory(selectedPatientId);
+        });
+    }
+
     // Default route logic: Start on CRM
     document.querySelector('[data-target="crm-view"]').click();
 });

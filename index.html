@@ -13,7 +13,6 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div class="brand">
                 <div class="logo">
@@ -38,11 +37,7 @@
             </div>
         </nav>
 
-        <!-- Main Content Area -->
         <main class="main-content">
-            <!-- View Manager -->
-            
-            <!-- CRM View -->
             <section id="crm-view" class="view-section active">
                 <div class="header-bar">
                     <h2>顧客管理 (CRM)</h2>
@@ -60,12 +55,10 @@
                         <span class="filter-chip" data-filter="drop">中断</span>
                     </div>
                     <div class="patient-grid" id="patient-list">
-                        <!-- Patient Cards will be loaded here via JS -->
-                    </div>
+                        </div>
                 </div>
             </section>
 
-            <!-- SOAP View -->
             <section id="soap-view" class="view-section">
                 <div class="header-bar">
                     <h2>カルテ管理 (SOAP)</h2>
@@ -79,16 +72,30 @@
                     <div class="soap-history">
                         <h3>過去のカルテ</h3>
                         <div class="timeline" id="soap-timeline">
-                            <!-- Dynamic records -->
-                        </div>
+                            </div>
                     </div>
                     <div class="soap-editor card">
                         <h3>新規カルテ作成</h3>
                         <form id="soap-form">
                             <div class="dental-chart input-group">
-                                <label><i class="ri-teeth-line"></i> 歯式・部位</label>
+                                <label><i class="ri-tools-line"></i> 歯式状態ツール</label>
+                                
+                                <div class="dental-tools-wrapper">
+                                    <input type="radio" name="dental-tool" id="tool-selected" value="selected" class="tool-radio" checked>
+                                    <label for="tool-selected" class="tool-label">通常選択</label>
+
+                                    <input type="radio" name="dental-tool" id="tool-decay" value="decay" class="tool-radio">
+                                    <label for="tool-decay" class="tool-label">虫歯 (C)</label>
+
+                                    <input type="radio" name="dental-tool" id="tool-treated" value="treated" class="tool-radio">
+                                    <label for="tool-treated" class="tool-label">治療済 (CR/FMC)</label>
+
+                                    <input type="radio" name="dental-tool" id="tool-missing" value="missing" class="tool-radio">
+                                    <label for="tool-missing" class="tool-label">欠損/抜歯</label>
+                                </div>
+
                                 <div id="interactive-dental-chart" class="interactive-dental-chart"></div>
-                                <input type="text" id="soap-teeth" placeholder="例: 16, 21" class="form-control" readonly>
+                                <input type="text" id="soap-teeth" placeholder="入力結果がここに表示されます" class="form-control" readonly>
                             </div>
                             <div class="form-grid">
                                 <div class="input-group">
@@ -109,7 +116,7 @@
                                 </div>
                             </div>
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary">キャンセル</button>
+                                <button type="button" class="btn btn-secondary" onclick="clearDentalChart()">チャートクリア</button>
                                 <button type="submit" class="btn btn-primary">保存する</button>
                             </div>
                         </form>
@@ -117,7 +124,6 @@
                 </div>
             </section>
 
-            <!-- Graph View -->
             <section id="graph-view" class="view-section">
                 <div class="header-bar">
                     <h2>紹介ネットワーク</h2>
@@ -147,11 +153,54 @@
                     <div id="d3-graph"></div>
                 </div>
             </section>
+            
+            <section id="dashboard-view" class="view-section">
+                <div class="header-bar">
+                    <h2>ダッシュボード</h2>
+                </div>
+            </section>
 
         </main>
+        
+        <!-- New Patient Modal -->
+        <div id="new-patient-modal" class="modal">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h3>新規患者登録</h3>
+                    <button class="close-btn" id="modal-close"><i class="ri-close-line"></i></button>
+                </div>
+                <form id="new-patient-form">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>患者名 (名前)</label>
+                            <input type="text" id="np-name" class="form-control" required placeholder="例: 佐藤 太郎">
+                        </div>
+                        <div class="input-group">
+                            <label>フリガナ</label>
+                            <input type="text" id="np-kana" class="form-control" required placeholder="例: サトウ タロウ">
+                        </div>
+                        <div class="input-group">
+                            <label>電話番号</label>
+                            <input type="tel" id="np-phone" class="form-control" required placeholder="例: 090-1234-5678">
+                        </div>
+                        <div class="input-group">
+                            <label>ステータス</label>
+                            <select id="np-status" class="custom-select" required>
+                                <option value="new">新患</option>
+                                <option value="recall">定期検診</option>
+                                <option value="drop">中断</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="modal-cancel">キャンセル</button>
+                        <button type="submit" class="btn btn-primary">登録する</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <!-- Scripts -->
     <script src="js/data.js"></script>
     <script src="js/graph.js"></script>
     <script src="js/app.js"></script>
