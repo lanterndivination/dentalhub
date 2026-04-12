@@ -87,8 +87,7 @@
                         <form id="soap-form">
                             <div class="dental-chart input-group">
                                 <label><i class="ri-teeth-line"></i> 歯式・部位</label>
-                                <div id="interactive-dental-chart" class="interactive-dental-chart"></div>
-                                <input type="text" id="soap-teeth" placeholder="例: 16, 21" class="form-control" readonly>
+                                <input type="text" placeholder="例: 上顎右側第一大臼歯 (16)" class="form-control">
                             </div>
                             <div class="form-grid">
                                 <div class="input-group">

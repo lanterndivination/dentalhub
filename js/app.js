@@ -158,6 +158,82 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // --- Dental Chart Logic ---
+    const initDentalChart = () => {
+        const chartContainer = document.getElementById('interactive-dental-chart');
+        const teethInput = document.getElementById('soap-teeth');
+        if (!chartContainer || !teethInput) return;
+
+        const arches = [
+            {
+                type: 'upper',
+                quadrants: [
+                    [18, 17, 16, 15, 14, 13, 12, 11], // Top Right (Patient's right, screen left)
+                    [21, 22, 23, 24, 25, 26, 27, 28]  // Top Left (Patient's left, screen right)
+                ]
+            },
+            {
+                type: 'lower',
+                quadrants: [
+                    [48, 47, 46, 45, 44, 43, 42, 41], // Bottom Right
+                    [31, 32, 33, 34, 35, 36, 37, 38]  // Bottom Left
+                ]
+            }
+        ];
+
+        let selectedTeeth = new Set();
+
+        const updateInput = () => {
+            // Sort normally or by quadrant if needed, regular sort sorts 11, 12... which is fine for now
+            const sortedTeeth = Array.from(selectedTeeth).sort();
+            teethInput.value = sortedTeeth.join(', ');
+        };
+
+        const getToothType = (num) => {
+            const digit = num % 10;
+            if (digit === 1 || digit === 2) return 'incisor';
+            if (digit === 3) return 'canine';
+            if (digit === 4 || digit === 5) return 'premolar';
+            return 'molar';
+        };
+
+        arches.forEach(arch => {
+            const archDiv = document.createElement('div');
+            archDiv.className = `dental-arch ${arch.type}`;
+
+            arch.quadrants.forEach((quad, index) => {
+                const quadDiv = document.createElement('div');
+                quadDiv.className = 'dental-quadrant';
+
+                quad.forEach(toothNum => {
+                    const toothDiv = document.createElement('div');
+                    toothDiv.className = `tooth ${arch.type}`;
+                    toothDiv.textContent = toothNum;
+                    toothDiv.setAttribute('data-tooth-type', getToothType(toothNum));
+                    
+                    toothDiv.addEventListener('click', () => {
+                        if (selectedTeeth.has(toothNum)) {
+                            selectedTeeth.delete(toothNum);
+                            toothDiv.classList.remove('selected');
+                        } else {
+                            selectedTeeth.add(toothNum);
+                            toothDiv.classList.add('selected');
+                        }
+                        updateInput();
+                    });
+
+                    quadDiv.appendChild(toothDiv);
+                });
+
+                archDiv.appendChild(quadDiv);
+            });
+
+            chartContainer.appendChild(archDiv);
+        });
+    };
+
+    initDentalChart();
+
     // Initial render
     renderPatients();
     
