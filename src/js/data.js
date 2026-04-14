@@ -45,7 +45,7 @@ const generateData = () => {
 
 // --- Encryption (AES-256) ---
 // 設定ファイルや環境変数からキーを読み込む運用を想定 (シミュレーション)
-const ENV_SECRET_KEY = "super_secret_dental_key_2026"; 
+const ENV_SECRET_KEY = "super_secret_dental_key_2026";
 
 const CryptoDB = {
     encrypt: (text) => {
@@ -79,6 +79,13 @@ const Audit = {
 // --- Initialize and Migrate Data ---
 const rawData = generateData();
 
+// テスト環境用の初期ユーザー情報
+rawData.users = [
+    { id: 'admin', pass: 'password123', name: '院長', role: 'admin' },
+    { id: 'doctor1', pass: 'password123', name: '佐藤 医師', role: 'doctor' },
+    { id: 'staff1', pass: 'password123', name: '鈴木 受付', role: 'staff' }
+];
+
 // マイグレーションスクリプト：テストデータの個人情報を暗号化フォーマットに移行
 console.log("Starting Data Migration: Encrypting Patient Records...");
 rawData.patients.forEach(p => {
@@ -87,7 +94,7 @@ rawData.patients.forEach(p => {
     p._encrypted_kana = CryptoDB.encrypt(p.kana);
     p._encrypted_phone = CryptoDB.encrypt(p.phone);
     p._encrypted_dob = CryptoDB.encrypt(p.dob);
-    
+
     // アプリケーション層（app.js）がそのままのコードで動くように、
     // Getter/Setterを通じて透過的に暗号化・復号化を行う（ORMの機能と同等）
     delete p.name;
@@ -95,10 +102,10 @@ rawData.patients.forEach(p => {
     delete p.phone;
     delete p.dob;
 
-    Object.defineProperty(p, 'name', { get: function() { return CryptoDB.decrypt(this._encrypted_name); }, set: function(v) { this._encrypted_name = CryptoDB.encrypt(v); }, enumerable: true });
-    Object.defineProperty(p, 'kana', { get: function() { return CryptoDB.decrypt(this._encrypted_kana); }, set: function(v) { this._encrypted_kana = CryptoDB.encrypt(v); }, enumerable: true });
-    Object.defineProperty(p, 'phone', { get: function() { return CryptoDB.decrypt(this._encrypted_phone); }, set: function(v) { this._encrypted_phone = CryptoDB.encrypt(v); }, enumerable: true });
-    Object.defineProperty(p, 'dob', { get: function() { return CryptoDB.decrypt(this._encrypted_dob); }, set: function(v) { this._encrypted_dob = CryptoDB.encrypt(v); }, enumerable: true });
+    Object.defineProperty(p, 'name', { get: function () { return CryptoDB.decrypt(this._encrypted_name); }, set: function (v) { this._encrypted_name = CryptoDB.encrypt(v); }, enumerable: true });
+    Object.defineProperty(p, 'kana', { get: function () { return CryptoDB.decrypt(this._encrypted_kana); }, set: function (v) { this._encrypted_kana = CryptoDB.encrypt(v); }, enumerable: true });
+    Object.defineProperty(p, 'phone', { get: function () { return CryptoDB.decrypt(this._encrypted_phone); }, set: function (v) { this._encrypted_phone = CryptoDB.encrypt(v); }, enumerable: true });
+    Object.defineProperty(p, 'dob', { get: function () { return CryptoDB.decrypt(this._encrypted_dob); }, set: function (v) { this._encrypted_dob = CryptoDB.encrypt(v); }, enumerable: true });
 });
 console.log("Migration Complete.");
 

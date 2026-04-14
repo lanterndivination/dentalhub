@@ -5,14 +5,14 @@ const renderGraph = (patients, relations, containerId, timeFilter = 'all') => {
     container.innerHTML = ""; // Clear existing
 
     if (!container) return;
-    
+
     const width = container.clientWidth;
     const height = container.clientHeight;
 
     // Filter relations based on time
     let filteredRelations = relations;
     const now = new Date("2024-04-07"); // Simulation current date based on mock data
-    
+
     if (timeFilter === '1y') {
         filteredRelations = relations.filter(r => {
             const diffTime = Math.abs(now - new Date(r.date));

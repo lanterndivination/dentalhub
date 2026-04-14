@@ -1,20 +1,50 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dental EMR Hub & CRM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
+
 <body>
     <div id="toast-container" class="toast-container"></div>
-    <div class="app-container">
+    <div id="login-screen" class="login-screen"
+        style="display: flex; height: 100vh; width: 100vw; align-items: center; justify-content: center; background: var(--bg-main);">
+        <div class="login-card card" style="width: 400px; padding: 40px;">
+            <div class="brand" style="justify-content: center; margin-bottom: 24px;">
+                <div class="logo"><i class="ri-tooth-fill"></i></div>
+                <h1>Dental Hub - Login</h1>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>ユーザーID</label>
+                    <input type="text" id="login-id" class="form-control" required>
+                </div>
+                <div class="input-group" style="margin-top: 16px;">
+                    <label>パスワード</label>
+                    <input type="password" id="login-pass" class="form-control" required>
+                </div>
+                <div class="form-actions" style="justify-content: center; margin-top: 32px;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">ログイン</button>
+                </div>
+                <p id="login-error"
+                    style="color: var(--danger); text-align: center; margin-top: 16px; font-size: 0.85rem; display: none;">
+                    IDまたはパスワードが間違っています</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container" style="display: none;">
         <nav class="sidebar">
             <div class="brand">
                 <div class="logo">
@@ -22,24 +52,27 @@
                 </div>
                 <h1>Dental Hub</h1>
             </div>
-            
+
             <ul class="nav-links">
                 <li class="active" data-target="dashboard-view"><i class="ri-dashboard-line"></i> ダッシュボード</li>
                 <li data-target="crm-view"><i class="ri-folder-user-line"></i> 顧客管理 (CRM)</li>
                 <li data-target="soap-view"><i class="ri-file-list-3-line"></i> カルテ管理 (SOAP)</li>
                 <li data-target="graph-view"><i class="ri-node-tree"></i> 紹介ネットワーク</li>
+                <li data-target="admin-view" id="nav-admin" style="display: none;"><i class="ri-admin-line"></i> システム管理
+                </li>
             </ul>
 
-            <div class="user-profile">
-                <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="avatar">
-                <div class="user-info">
-                    <span class="user-name" id="current-user-name">山田 太郎</span>
-                    <select id="role-switcher" class="custom-select" style="font-size: 0.75rem; padding: 2px 4px; margin-top: 4px;">
-                        <option value="admin">院長 (Admin)</option>
-                        <option value="doctor">歯科医師 (Doctor)</option>
-                        <option value="staff">受付 (Staff)</option>
-                    </select>
+            <div class="user-profile" style="flex-direction: column; align-items: stretch; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="avatar">
+                    <div class="user-info">
+                        <span class="user-name" id="current-user-name">ユーザー名</span>
+                        <span class="user-role" id="current-user-role"
+                            style="font-size: 0.8rem; color: var(--text-muted);">権限</span>
+                    </div>
                 </div>
+                <button class="btn btn-secondary" id="logout-btn" style="width: 100%; justify-content: center;"><i
+                        class="ri-logout-box-r-line"></i> ログアウト</button>
             </div>
         </nav>
 
@@ -61,7 +94,7 @@
                         <span class="filter-chip" data-filter="drop">中断</span>
                     </div>
                     <div class="patient-grid" id="patient-list">
-                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -78,30 +111,35 @@
                     <div class="soap-history">
                         <h3>過去のカルテ</h3>
                         <div class="timeline" id="soap-timeline">
-                            </div>
+                        </div>
                     </div>
                     <div class="soap-editor card">
                         <h3>新規カルテ作成</h3>
                         <form id="soap-form">
                             <div class="dental-chart input-group">
                                 <label><i class="ri-tools-line"></i> 歯式状態ツール</label>
-                                
+
                                 <div class="dental-tools-wrapper">
-                                    <input type="radio" name="dental-tool" id="tool-selected" value="selected" class="tool-radio" checked>
+                                    <input type="radio" name="dental-tool" id="tool-selected" value="selected"
+                                        class="tool-radio" checked>
                                     <label for="tool-selected" class="tool-label">通常選択</label>
 
-                                    <input type="radio" name="dental-tool" id="tool-decay" value="decay" class="tool-radio">
+                                    <input type="radio" name="dental-tool" id="tool-decay" value="decay"
+                                        class="tool-radio">
                                     <label for="tool-decay" class="tool-label">虫歯 (C)</label>
 
-                                    <input type="radio" name="dental-tool" id="tool-treated" value="treated" class="tool-radio">
+                                    <input type="radio" name="dental-tool" id="tool-treated" value="treated"
+                                        class="tool-radio">
                                     <label for="tool-treated" class="tool-label">治療済 (CR/FMC)</label>
 
-                                    <input type="radio" name="dental-tool" id="tool-missing" value="missing" class="tool-radio">
+                                    <input type="radio" name="dental-tool" id="tool-missing" value="missing"
+                                        class="tool-radio">
                                     <label for="tool-missing" class="tool-label">欠損/抜歯</label>
                                 </div>
 
                                 <div id="interactive-dental-chart" class="interactive-dental-chart"></div>
-                                <input type="text" id="soap-teeth" placeholder="入力結果がここに表示されます" class="form-control" readonly>
+                                <input type="text" id="soap-teeth" placeholder="入力結果がここに表示されます" class="form-control"
+                                    readonly>
                             </div>
                             <div class="form-grid">
                                 <div class="input-group">
@@ -117,12 +155,25 @@
                                     <textarea id="soap-a" rows="3" placeholder="所見に基づく評価..."></textarea>
                                 </div>
                                 <div class="input-group">
+                                    <label>ステータス／タグ (カルテ更新時に上書きされます)</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <select id="soap-status" class="custom-select" style="min-width: 120px;">
+                                            <option value="new">新患</option>
+                                            <option value="recall">定期検診</option>
+                                            <option value="drop">中断</option>
+                                        </select>
+                                        <input type="text" id="soap-tags" class="form-control"
+                                            placeholder="例: インプラント検討中, 歯医者嫌い" style="flex: 1;">
+                                    </div>
+                                </div>
+                                <div class="input-group">
                                     <label>P (Plan) - 計画・処置</label>
                                     <textarea id="soap-p" rows="3" placeholder="本日の処置と次回の計画..."></textarea>
                                 </div>
                             </div>
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="clearDentalChart()">チャートクリア</button>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="clearDentalChart()">チャートクリア</button>
                                 <button type="submit" class="btn btn-primary">保存する</button>
                             </div>
                         </form>
@@ -159,15 +210,63 @@
                     <div id="d3-graph"></div>
                 </div>
             </section>
-            
+
             <section id="dashboard-view" class="view-section">
                 <div class="header-bar">
                     <h2>ダッシュボード</h2>
                 </div>
             </section>
 
+            <section id="admin-view" class="view-section">
+                <div class="header-bar">
+                    <h2>システム管理 (ユーザー権限管理)</h2>
+                </div>
+                <div class="view-body soap-layout">
+                    <div class="soap-history">
+                        <h3>現在のユーザー一覧</h3>
+                        <div class="timeline" id="user-list-container">
+                        </div>
+                    </div>
+                    <div class="soap-editor card">
+                        <h3>ユーザー追加・編集</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                            既存のIDを入力すると、そのユーザーの情報が上書き更新されます。</p>
+                        <form id="admin-user-form">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <label>ユーザーID</label>
+                                    <input type="text" id="nu-id" class="form-control" required
+                                        placeholder="例: doctor2">
+                                </div>
+                                <div class="input-group">
+                                    <label>名前</label>
+                                    <input type="text" id="nu-name" class="form-control" required
+                                        placeholder="例: 高橋 医師">
+                                </div>
+                                <div class="input-group">
+                                    <label>パスワード</label>
+                                    <input type="password" id="nu-pass" class="form-control" required
+                                        placeholder="最低4文字以上">
+                                </div>
+                                <div class="input-group">
+                                    <label>権限</label>
+                                    <select id="nu-role" class="custom-select" required>
+                                        <option value="admin">管理者 (院長)</option>
+                                        <option value="doctor">歯科医師</option>
+                                        <option value="staff">受付スタッフ</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">ユーザーを追加する</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
         </main>
-        
+
         <!-- New Patient Modal -->
         <div id="new-patient-modal" class="modal">
             <div class="modal-content card">
@@ -187,7 +286,8 @@
                         </div>
                         <div class="input-group">
                             <label>電話番号</label>
-                            <input type="tel" id="np-phone" class="form-control" required placeholder="例: 090-1234-5678">
+                            <input type="tel" id="np-phone" class="form-control" required
+                                placeholder="例: 090-1234-5678">
                         </div>
                         <div class="input-group">
                             <label>ステータス</label>
@@ -196,6 +296,10 @@
                                 <option value="recall">定期検診</option>
                                 <option value="drop">中断</option>
                             </select>
+                        </div>
+                        <div class="input-group">
+                            <label>患者タグ (カンマ区切り)</label>
+                            <input type="text" id="np-tags" class="form-control" placeholder="例: ハブ患者, 小児歯科">
                         </div>
                     </div>
                     <div class="form-actions">
@@ -211,4 +315,5 @@
     <script src="js/graph.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>
