@@ -747,6 +747,8 @@ body {
 .modal-content {
     width: 450px;
     max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
     background: white;
     padding: 32px;
 }
