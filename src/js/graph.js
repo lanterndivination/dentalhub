@@ -90,6 +90,10 @@ const renderGraph = (patients, relations, containerId, timeFilter = 'all') => {
         .attr("class", "node")
         .attr("r", d => 10 + Math.sqrt(d.val) * 5)
         .attr("fill", d => d.val > 3 ? "#4F46E5" : "#94A3B8") // Highlight hubs
+        .style("cursor", "pointer")
+        .on("click", (event, d) => {
+            if (window.jumpToPatientChart) window.jumpToPatientChart(d.id);
+        })
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -104,7 +108,11 @@ const renderGraph = (patients, relations, containerId, timeFilter = 'all') => {
         .attr("class", "node-label")
         .attr("dx", 15)
         .attr("dy", 4)
-        .text(d => d.val > 2 ? d.name : ""); // Only show names for hubs or connected nodes
+        .style("cursor", "pointer")
+        .text(d => d.val > 2 ? d.name : "")
+        .on("click", (event, d) => {
+            if (window.jumpToPatientChart) window.jumpToPatientChart(d.id);
+        });
 
     simulation.on("tick", () => {
         link

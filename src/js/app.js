@@ -311,6 +311,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    window.jumpToPatientChart = (patientId) => {
+        const soapLink = document.querySelector('[data-target="soap-view"]');
+        if (soapLink) {
+            soapLink.click();
+            const soapSelectEl = document.getElementById('soap-patient-select');
+            if (soapSelectEl) {
+                soapSelectEl.value = patientId;
+                soapSelectEl.dispatchEvent(new Event('change'));
+            }
+        }
+    };
+
     // --- Interactive Dental Chart (State Tagging) ---
     let toothStates = new Map();
 
@@ -457,6 +469,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const openModal = () => {
         if (modal) modal.classList.add('active');
+        const introSelect = document.getElementById('np-introduced-by');
+        if (introSelect) {
+            introSelect.innerHTML = '<option value="">なし</option>';
+            patients.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.id} - ${p.name}`;
+                introSelect.appendChild(opt);
+            });
+        }
     };
 
     const closeModal = () => {
@@ -478,19 +500,37 @@ document.addEventListener("DOMContentLoaded", () => {
             const rawTags = document.getElementById('np-tags') ? document.getElementById('np-tags').value : '';
             const tagArray = rawTags ? rawTags.split(',').map(t => t.trim()).filter(t => t) : [];
 
+            const dobVal = document.getElementById('np-dob') ? document.getElementById('np-dob').value : "2000-01-01";
+            const genderVal = document.getElementById('np-gender') ? document.getElementById('np-gender').value : "other";
+            const introVal = document.getElementById('np-introduced-by') ? document.getElementById('np-introduced-by').value : null;
+            const nextVisitVal = document.getElementById('np-next-visit') ? document.getElementById('np-next-visit').value : "";
+
             const newPatient = {
                 id: newId,
                 name: document.getElementById('np-name').value,
                 kana: document.getElementById('np-kana').value,
                 phone: document.getElementById('np-phone').value,
                 status: document.getElementById('np-status').value,
-                dob: "2000-01-01", // Default mock value
+                dob: dobVal,
+                gender: genderVal,
                 lastVisit: "今日",
+                nextVisit: nextVisitVal,
                 tags: tagArray.length > 0 ? tagArray : ["新患登録"],
-                introducedBy: null
+                introducedBy: introVal || null
             };
 
             patients.push(newPatient); // Add to data array
+
+            if (introVal) {
+                const newRelation = {
+                    id: `R${window.DentalData.relations.length + 1}`,
+                    source: introVal,
+                    target: newId,
+                    type: "friend",
+                    date: new Date().toISOString().split('T')[0]
+                };
+                window.DentalData.relations.push(newRelation);
+            }
 
             // 監査ログに記録
             if (window.Audit) {

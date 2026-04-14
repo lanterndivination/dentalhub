@@ -301,6 +301,28 @@
                             <label>患者タグ (カンマ区切り)</label>
                             <input type="text" id="np-tags" class="form-control" placeholder="例: ハブ患者, 小児歯科">
                         </div>
+                        <div class="input-group">
+                            <label>生年月日</label>
+                            <input type="date" id="np-dob" class="form-control" required>
+                        </div>
+                        <div class="input-group">
+                            <label>性別</label>
+                            <select id="np-gender" class="custom-select" required>
+                                <option value="male">男性</option>
+                                <option value="female">女性</option>
+                                <option value="other">その他</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>紹介元 (紹介ネットワーク用)</label>
+                            <select id="np-introduced-by" class="custom-select">
+                                <option value="">なし</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="grid-column: 1 / -1;">
+                            <label>次回来院予定</label>
+                            <input type="date" id="np-next-visit" class="form-control">
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="modal-cancel">キャンセル</button>
