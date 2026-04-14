@@ -3,19 +3,78 @@
 document.addEventListener("DOMContentLoaded", () => {
     const { patients, soapRecords, relations } = window.DentalData;
     
+    // --- Security Helpers ---
+    const escapeHTML = (str) => {
+        if (!str) return "";
+        return str.toString().replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag));
+    };
+
+    // --- Toast Notification Helper ---
+    const showToast = (message, type = 'danger') => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<i class="ri-information-line"></i> <span>${escapeHTML(message)}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    };
+
+    // --- Auth & RBAC State ---
+    let currentUser = { id: 'U1', name: '山田 太郎', role: 'admin' };
+    
+    const roleSwitcher = document.getElementById('role-switcher');
+    const userNameDisplay = document.getElementById('current-user-name');
+    if (roleSwitcher) {
+        roleSwitcher.addEventListener('change', (e) => {
+            const role = e.target.value;
+            currentUser.role = role;
+            if (role === 'admin') { currentUser.name = '山田 太郎'; }
+            if (role === 'doctor') { currentUser.name = '佐藤 医師'; }
+            if (role === 'staff') { currentUser.name = '鈴木 受付'; }
+            if (userNameDisplay) userNameDisplay.textContent = currentUser.name;
+            
+            // RBAC: If on restricted page, eject to dashboard
+            if (role === 'staff') {
+                const isSoapActive = document.getElementById('soap-view').classList.contains('active');
+                if (isSoapActive) {
+                    showToast('権限がありません: 受付スタッフはカルテ管理を閲覧できません', 'warning');
+                    document.querySelector('[data-target="dashboard-view"]').click();
+                }
+            }
+            showToast(`${currentUser.name} (${role}) に切り替えました`, 'success');
+        });
+    }
+
     // --- Navigation System ---
     const navLinks = document.querySelectorAll('.nav-links li');
     const views = document.querySelectorAll('.view-section');
 
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
+            const targetId = link.getAttribute('data-target');
+
+            // --- RBAC Middleware Guard ---
+            if (targetId === 'soap-view' && currentUser.role === 'staff') {
+                showToast('アクセス拒否: カルテ管理は管理者または医師のみアクセス可能です。', 'danger');
+                return; // Stop navigation
+            }
+
             // Remove active classes
             navLinks.forEach(l => l.classList.remove('active'));
             views.forEach(v => v.classList.remove('active'));
 
             // Set active class
             link.classList.add('active');
-            const targetId = link.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
 
             // Trigger view-specific logic
@@ -54,21 +113,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         filtered.forEach(p => {
-            const tagsHtml = p.tags.map(t => `<span class="tag">${t}</span>`).join('');
+            const tagsHtml = p.tags.map(t => `<span class="tag">${escapeHTML(t)}</span>`).join('');
             
             const card = document.createElement('div');
             card.className = 'patient-card';
             card.innerHTML = `
                 <div class="patient-header">
                     <div class="patient-name-wrapper">
-                        <h3>${p.name}</h3>
-                        <span>${p.kana}</span>
+                        <h3>${escapeHTML(p.name)}</h3>
+                        <span>${escapeHTML(p.kana)}</span>
                     </div>
-                    ${getStatusLabel(p.status)}
+                    ${getStatusLabel(p.status)} /* Note: getStatusLabel returns safe static HTML */
                 </div>
                 <div class="patient-details">
-                    <p><i class="ri-phone-line"></i> ${p.phone}</p>
-                    <p><i class="ri-calendar-event-line"></i> 最終来院: ${p.lastVisit}</p>
+                    <p><i class="ri-phone-line"></i> ${escapeHTML(p.phone)}</p>
+                    <p><i class="ri-calendar-event-line"></i> 最終来院: ${escapeHTML(p.lastVisit)}</p>
                 </div>
                 <div class="patient-tags">
                     ${tagsHtml}
@@ -128,12 +187,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const recDiv = document.createElement('div');
             recDiv.className = 'soap-record';
             recDiv.innerHTML = `
-                <div class="record-date">${r.date} - 部位: ${r.teeth}</div>
+                <div class="record-date">${escapeHTML(r.date)} - 部位: ${escapeHTML(r.teeth)}</div>
                 <div class="soap-grid">
-                    <div class="soap-label">S</div><div class="soap-content">${r.s}</div>
-                    <div class="soap-label">O</div><div class="soap-content">${r.o}</div>
-                    <div class="soap-label">A</div><div class="soap-content">${r.a}</div>
-                    <div class="soap-label">P</div><div class="soap-content">${r.p}</div>
+                    <div class="soap-label">S</div><div class="soap-content">${escapeHTML(r.s)}</div>
+                    <div class="soap-label">O</div><div class="soap-content">${escapeHTML(r.o)}</div>
+                    <div class="soap-label">A</div><div class="soap-content">${escapeHTML(r.a)}</div>
+                    <div class="soap-label">P</div><div class="soap-content">${escapeHTML(r.p)}</div>
                 </div>
             `;
             soapTimeline.appendChild(recDiv);
@@ -336,6 +395,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             patients.push(newPatient); // Add to data array
             
+            // 監査ログに記録
+            if (window.Audit) {
+                window.Audit.log(currentUser.id, "CREATE", "patients", newId, { new_data: newPatient });
+            }
+
             // Also append to the SOAP patient selector
             const soapSelectEl = document.getElementById('soap-patient-select');
             if(soapSelectEl) {
@@ -346,6 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             closeModal();
+            showToast('新規患者を登録しました', 'success');
             renderPatients(); // Re-render the grid
             
             // Re-render graph if necessary
@@ -393,10 +458,17 @@ document.addEventListener("DOMContentLoaded", () => {
             // save to array
             soapRecords.push(newRecord);
             
+            // 監査ログに記録
+            if (window.Audit) {
+                window.Audit.log(currentUser.id, "CREATE", "soapRecords", newRecordId, { new_data: newRecord });
+            }
+            
             // form reset
             soapForm.reset();
             if (window.clearDentalChart) window.clearDentalChart();
             
+            showToast('カルテを保存しました', 'success');
+
             // re-render the timeline
             renderSoapHistory(selectedPatientId);
         });

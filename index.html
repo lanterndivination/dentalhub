@@ -10,8 +10,10 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
+    <div id="toast-container" class="toast-container"></div>
     <div class="app-container">
         <nav class="sidebar">
             <div class="brand">
@@ -29,10 +31,14 @@
             </ul>
 
             <div class="user-profile">
-                <img src="https://i.pravatar.cc/150?img=11" alt="Dr. Profile" class="avatar">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="avatar">
                 <div class="user-info">
-                    <span class="user-name">Dr. Yamada</span>
-                    <span class="user-role">院長</span>
+                    <span class="user-name" id="current-user-name">山田 太郎</span>
+                    <select id="role-switcher" class="custom-select" style="font-size: 0.75rem; padding: 2px 4px; margin-top: 4px;">
+                        <option value="admin">院長 (Admin)</option>
+                        <option value="doctor">歯科医師 (Doctor)</option>
+                        <option value="staff">受付 (Staff)</option>
+                    </select>
                 </div>
             </div>
         </nav>
